@@ -114,8 +114,8 @@ psp_binary = 'EBOOT.PBP'
 
 script_path = join_paths(meson.current_source_dir(), 'pkg_psp.sh')
 custom_target(psp_binary,
-  depends: sinusoid,
-  input : sinusoid,
+  depends: fonttest,
+  input : fonttest,
   output : 'fake',
   command : [script_path, '@INPUT@', '@OUTPUT@'],
   build_by_default : true)

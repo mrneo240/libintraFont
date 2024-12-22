@@ -1963,7 +1963,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 		if(font->v){
 			free(font->v);
 		}
-		font->v = (struct fontVertex*)malloc(VERTEX_PER_QUAD * (n_glyphs + n_sglyphs) * sizeof(fontVertex));
+		font->v = (fontVertex*)malloc(VERTEX_PER_QUAD * (n_glyphs + n_sglyphs) * sizeof(fontVertex));
 		font->v_size = VERTEX_PER_QUAD * (n_glyphs + n_sglyphs) * sizeof(fontVertex);
 		printf("%s font->v size =\t %d\n", font->filename, font->v_size);
 	}
