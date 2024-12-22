@@ -1252,6 +1252,8 @@ float intraFontPrintColumnUCS2(intraFont *font, float x, float y, float column, 
 }
 
 #if defined(_PSP)
+
+#define VERTEX_PER_QUAD (6)
 float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column, const cccUCS2 *text, int length)
 {
 	if (!text || length <= 0 || !font)
@@ -1279,19 +1281,15 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 
 	unsigned int color = font->color, shadowColor = font->shadowColor;
 	float glyphscale = font->size;
-	float width = 0.f, height = font->advancey * glyphscale / 4.0;
-	float left = x, top = y - 2 * height;
+	float width = 0.f, height = font->advancey * glyphscale / 4.0f;
+	float left = x, top = y - 2.f * height;
 	int eol = -1, n_spaces = -1, scroll = 0, textwidth;
 	float fill = 0.f;
 	float xl, xr, yu, yd, ul, ur, vu, vd;
 
-	typedef struct
-	{
-		float u, v;
-		unsigned int c;
-		float x, y, z;
-	} fontVertex;
-	fontVertex *v, *v0, *v1, *v2, *v3, *v4, *v5, *s0, *s1, *s2, *s3, *s4, *s5;
+	fontVertex *v; // main buffer
+	fontVertex *v0, *v1, *v2, *v3, *v4, *v5;
+	fontVertex *s0, *s1, *s2, *s3, *s4, *s5;
 
 	//count number of glyphs to draw and cache BMPs
 	int j, n_glyphs, last_n_glyphs, n_sglyphs, changed, count = 0;
@@ -1304,7 +1302,6 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 		last_n_glyphs = 0;
 		for (i = 0; i < length; i++)
 		{
-
 			char_id = intraFontGetID(font, text[i]); //char
 			if (char_id < font->n_chars)
 			{
@@ -1342,7 +1339,8 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 
 					if (n_glyphs > last_n_glyphs)
 					{
-						n_sglyphs++; //shadow
+						/* Only add shadows if they exist */
+						n_sglyphs+= !!font->n_shadows; //shadow
 						if (!(font->shadowGlyph[font->glyph[char_id].shadowID].flags & PGF_CACHED))
 						{
 							if (intraFontGetBMP(font, font->glyph[char_id].shadowID, PGF_SHADOWGLYPH))
@@ -1359,7 +1357,8 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 						if (intraFontGetBMP(font, char_id, PGF_CHARGLYPH))
 							changed = 1;
 					}
-					n_sglyphs++; //shadow
+					/* Only add shadows if they exist */
+					n_sglyphs+= !!font->n_shadows; //shadow
 					if (!(font->shadowGlyph[0].flags & PGF_CACHED))
 					{
 						if (intraFontGetBMP(font, font->glyph[0].shadowID, PGF_SHADOWGLYPH))
@@ -1367,6 +1366,10 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 					}
 				}
 			}
+		}
+    if(changed){
+			font->options |= INTRAFONT_DIRTY;
+			//printf("CharID: %d UCS2: %d\n", char_id, text[i]);
 		}
 		count++;
 	} while (changed && count <= length);
@@ -1594,7 +1597,6 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 
 				if (glyph_id < font->n_chars)
 				{
-
 					Glyph *glyph = &(font->glyph[glyph_id]);
 					if (font->fileType == FILETYPE_BWFON)
 					{
@@ -1615,7 +1617,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 
 					if (font->isRotated)
 					{
-						v0 = &v[c_index * 6];
+						v0 = &v[c_index * VERTEX_PER_QUAD];
 						v1 = v0 + 1;
 						v2 = v1 + 1;
 						v3 = v2 + 1;
@@ -1625,22 +1627,22 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 						// Up-left
 						v0->u = ul, v0->v = vu;
 						v0->c = color;
-						v0->x = xl, v0->y = yu;
+            v0->x = xl, v0->y = yu, v0->z = 0;
 
 						// Up-right
 						v1->u = ur, v1->v = vu;
 						v1->c = color;
-						v1->x = xr, v1->y = yu;
+            v1->x = xr, v1->y = yu, v1->z = 0;
 
 						// Down-right
 						v2->u = ur, v2->v = vd;
 						v2->c = color;
-						v2->x = xr, v2->y = yd;
+            v2->x = xr, v2->y = yd, v2->z = 0;
 
 						// Down-left
 						v3->u = ul, v3->v = vd;
 						v3->c = color;
-						v3->x = xl, v3->y = yd;
+            v3->x = xl, v3->y = yd, v3->z = 0;
 
 						// Apply rotation to each vertex
 						// x' = x cos θ - y sin θ
@@ -1685,7 +1687,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 			}
 
 			//add vertices for shadow
-			if (c_index > last_c_index)
+			if (c_index > last_c_index && (shadowGlyph_ptr))
 			{
 				Glyph *shadowGlyph = &(font->shadowGlyph[shadowGlyph_ptr]);
 
@@ -1694,7 +1696,8 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 				xr = xl + shadowGlyph->width * glyphscale * 64.0f / ((float)font->shadowscale);
 				yu = top + height - shadowGlyph->top * glyphscale * 64.0f / ((float)font->shadowscale);
 				yd = yu + shadowGlyph->height * glyphscale * 64.0f / ((float)font->shadowscale);
-				// Tex coords
+
+        // Tex coords
 				ul = shadowGlyph->x - 0.25f;
 				ur = shadowGlyph->x + shadowGlyph->width + 0.25f;
 				vu = shadowGlyph->y - 0.25f;
@@ -1712,22 +1715,22 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 					// Up-left
 					s0->u = ul, s0->v = vu;
 					s0->c = shadowColor;
-					s0->x = xl, s0->y = yu;
+          s0->x = xl, s0->y = yu, s0->z = 0;
 
 					// Up-right
 					s1->u = ur, s1->v = vu;
 					s1->c = shadowColor;
-					s1->x = xr, s1->y = yu;
+          s1->x = xr, s1->y = yu, s1->z = 0;
 
 					// Down-right
 					s2->u = ur, s2->v = vd;
 					s2->c = shadowColor;
-					s2->x = xr, s2->y = yd;
+          s2->x = xr, s2->y = yd, s2->z = 0;
 
 					// Down-left
 					s3->u = ul, s3->v = vd;
 					s3->c = shadowColor;
-					s3->x = xl, s3->y = yd;
+          s3->x = xl, s3->y = yd, s3->z = 0;
 
 					// Rotate 'em all
 					float sx, sy;
@@ -1767,6 +1770,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 				last_c_index = c_index;
 			}
 
+
 			// advance
 			if (font->options & INTRAFONT_WIDTH_FIX)
 			{
@@ -1774,7 +1778,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 			}
 			else
 			{
-				width += font->glyph[glyph_ptr].advance * glyphscale * 0.25;
+				width += font->glyph[glyph_ptr].advance * glyphscale * 0.25f;
 			}
 
 			if ((text[i] == 32) && ((font->options & INTRAFONT_ALIGN_FULL) == INTRAFONT_ALIGN_FULL))
@@ -1786,7 +1790,8 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 			{
 				unsigned int altOptions = (font->altFont)->options;
 				(font->altFont)->options = altOptions & (PGF_WIDTH_MASK + PGF_CACHE_MASK);
-				width += intraFontPrintColumnUCS2Ex(font->altFont, left + width, top + height, 0.0f, text + i, 1) - (left + width);
+				const float adjust = left + width;
+				width += intraFontPrintColumnUCS2Ex(font->altFont, adjust, top + height, 0.0f, text + i, 1) - (adjust);
 				(font->altFont)->options = altOptions;
 			}
 		}

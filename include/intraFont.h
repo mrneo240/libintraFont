@@ -141,7 +141,12 @@ typedef struct {
   //currently no need ;
 } PGF_Header;
 
-typedef struct fontVertex fontVertex;
+typedef struct
+{
+  float u, v;
+  unsigned int c;
+  float x, y, z;
+} fontVertex;
 
 /**
  * A Font struct
