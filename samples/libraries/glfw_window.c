@@ -1,10 +1,12 @@
-﻿#include <windows.h>
-#if defined(__MINGW32__) || defined(__linux__)
-#include <GLFW/galo.h>
-#include <GLFW/glfw3.h>
-
-#include "galo.c"
+﻿#if defined(__WIN32) || defined(__WIN64)
+#include <windows.h>
 #endif
+
+#define GLAD_GL_IMPLEMENTATION
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+#include <glad/glad.h>
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,7 +62,6 @@ void RNDR_Init(void)  // We call this right after our OpenGL window is created.
 void UI_Set2D(void) {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  //glOrtho(0, 640, 480, 0, -1, 1);
   glOrtho(0, 480, 272, 0, -1, 1);
 }
 
@@ -75,7 +76,6 @@ int main(void) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-  //window = glfwCreateWindow(640, 480, "intrafont_universal", NULL, NULL);
   window = glfwCreateWindow(480, 272, "intrafont_universal", NULL, NULL);
   if (!window) {
     glfwTerminate();
@@ -85,6 +85,8 @@ int main(void) {
   glfwSetKeyCallback(window, key_callback);
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1);
+
+  gladLoadGL();
 
   RNDR_Init();
   glLoadIdentity();  // Reset The View

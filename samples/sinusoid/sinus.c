@@ -11,10 +11,11 @@
  *
  */
 
+#include <stdlib.h>
 #include <intraFont.h>
 #include <math.h>
 
-#if defined(__WIN32) || defined(__WIN64)
+#if defined(__WIN32) || defined(__WIN64) || defined(DESKTOP)
 #include "../libraries/glfw_window.c"
 #define FILE_PREFIX ""
 #endif
@@ -64,6 +65,10 @@ void load(void) {
   intraFontInit();
   /* Dreamcast recommended to use INTRAFONT_CACHE_ASCII as an option but not required */
   font = intraFontLoad(FILE_PREFIX "ltn8.pgf", 0);
+  if(!font){
+    printf("failed to load font!\n");
+    exit(1);
+  }
   intraFontSetStyle(font, 1.f, 0, 0, 0.f, INTRAFONT_ALIGN_CENTER);
 }
 
