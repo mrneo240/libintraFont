@@ -11,12 +11,13 @@
  *
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <intraFont.h>
 #include <math.h>
-#include <stdio.h>
 #include <time.h>
 
-#if defined(__WIN32) || defined(__WIN64)
+#if defined(__WIN32) || defined(__WIN64) || defined(DESKTOP)
 #include "../libraries/glfw_window.c"
 #define FILE_PREFIX ""
 #endif

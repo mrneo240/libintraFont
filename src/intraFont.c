@@ -27,11 +27,13 @@
     fprintf(stderr, "%s\n" , msg);
 #define DESKTOP 1
 #endif
+
 #if defined(_PSP)
 #include <pspkernel.h>
 #include <pspgu.h>
 #include <pspdisplay.h>
 #endif
+
 #if defined(_arch_dreamcast)
 #include <GL/gl.h>
 #define DESKTOP 1
@@ -44,9 +46,10 @@
 #include <malloc.h>
 #include <math.h>
 #include <intraFont.h>
+
 #if defined(_OSLIB_H_)
 #define OSLIB_FREE(a) free((a))
-#else 
+#else
 #ifndef M_PI
 #define M_PI ((float)(3.14159265358979323846))
 #endif
@@ -58,9 +61,9 @@
 
 static unsigned int __attribute__((aligned(16))) clut[16];
 
-unsigned long intraFontGetV(unsigned long n, unsigned char *p, unsigned long *b)
+uint32_t intraFontGetV(uint32_t n, unsigned char *p, uint32_t *b)
 {
-	unsigned long i, v = 0;
+	uint32_t i, v = 0;
 	for (i = 0; i < n; i++)
 	{
 		v += ((p[(*b) / 8] >> ((*b) % 8)) & 1) << i;
@@ -69,9 +72,9 @@ unsigned long intraFontGetV(unsigned long n, unsigned char *p, unsigned long *b)
 	return v;
 }
 
-unsigned long *intraFontGetTable(FILE *file, unsigned long n_elements, unsigned long bp_element)
+uint32_t *intraFontGetTable(FILE *file, uint32_t n_elements, uint32_t bp_element)
 {
-	unsigned long len_table = ((n_elements * bp_element + 31) / 32) * 4;
+	uint32_t len_table = ((n_elements * bp_element + 31) / 32) * 4;
 	unsigned char *raw_table = (unsigned char *)malloc(len_table * sizeof(unsigned char));
 	if (raw_table == NULL)
 		return NULL;
@@ -80,13 +83,13 @@ unsigned long *intraFontGetTable(FILE *file, unsigned long n_elements, unsigned 
 		free(raw_table);
 		return NULL;
 	}
-	unsigned long *table = (unsigned long *)malloc(n_elements * sizeof(unsigned long));
+	uint32_t *table = (uint32_t *)malloc(n_elements * sizeof(uint32_t));
 	if (table == NULL)
 	{
 		free(raw_table);
 		return NULL;
 	}
-	unsigned long i, j = 0;
+	uint32_t i, j = 0;
 	for (i = 0; i < n_elements; i++)
 	{
 		table[i] = intraFontGetV(bp_element, raw_table, &j);
@@ -125,13 +128,13 @@ int intraFontGetBMP(intraFont *font, unsigned short id, unsigned char glyphtype)
 		{
 			glyph = &(font->shadowGlyph[0]);
 		}
-		glyph->ptr = ((unsigned long)id) * 36; //36 bytes/char
+		glyph->ptr = ((uint32_t)id) * 36; //36 bytes/char
 	}
 
 	if (glyph->flags & PGF_CACHED)
 		return 1;
 
-	unsigned long b = glyph->ptr * 8;
+	uint32_t b = glyph->ptr * 8;
 
 	#if DESKTOP
 	unsigned int *font_texture_p = (unsigned int *)font->texture;
@@ -178,7 +181,7 @@ int intraFontGetBMP(intraFont *font, unsigned short id, unsigned char glyphtype)
 							xx = i / glyph->height;
 							yy = i % glyph->height;
 						}
-						#ifdef PSP
+						#if defined(_PSP)
 						if ((font->texX + xx) & 1)
 						{
 							font->texture[((font->texX + xx) + (font->texY + yy) * font->texWidth) >> 1] &= 0x0F;
@@ -189,7 +192,9 @@ int intraFontGetBMP(intraFont *font, unsigned short id, unsigned char glyphtype)
 							font->texture[((font->texX + xx) + (font->texY + yy) * font->texWidth) >> 1] &= 0xF0;
 							font->texture[((font->texX + xx) + (font->texY + yy) * font->texWidth) >> 1] |= (value);
 						}
-						#else 
+						#endif
+
+						#if defined(DESKTOP)
 						font_texture_p[((font->texX + xx) + (font->texY + yy) * font->texWidth)] = clut[value & 0xf];
 						#endif
 						i++;
@@ -206,8 +211,8 @@ int intraFontGetBMP(intraFont *font, unsigned short id, unsigned char glyphtype)
 						{
 							value = intraFontGetV(1, font->fontdata, &b) * 0x0f; //scale 1 bit/pix to 4 bit/pix
 
-/* Simple anti-aliasing/blur for black pixels. Unfortunately, does not improve the result... */
-#if 0
+							/* Simple anti-aliasing/blur for black pixels. Unfortunately, does not improve the result... */
+							#if 0
 							if ((value == 0) && (xx > 0) && (yy > 0) && (xx < (glyph->width - 1)) && (yy < (glyph->height - 1)))
 							{
 								b -= 19;
@@ -224,8 +229,9 @@ int intraFontGetBMP(intraFont *font, unsigned short id, unsigned char glyphtype)
 								value += intraFontGetV(1, font->fontdata, &b);
 								b -= 16;
 							}
-#endif
-							#ifdef PSP
+							#endif
+
+							#if defined(_PSP)
 							if ((font->texX + (7 - (xx & 7) + (xx & 248))) & 1)
 							{
 								font->texture[((font->texX + (7 - (xx & 7) + (xx & 248))) + (font->texY + yy) * font->texWidth) >> 1] &= 0x0F;
@@ -236,14 +242,16 @@ int intraFontGetBMP(intraFont *font, unsigned short id, unsigned char glyphtype)
 								font->texture[((font->texX + (7 - (xx & 7) + (xx & 248))) + (font->texY + yy) * font->texWidth) >> 1] &= 0xF0;
 								font->texture[((font->texX + (7 - (xx & 7) + (xx & 248))) + (font->texY + yy) * font->texWidth) >> 1] |= (value);
 							}
-							#else
+							#endif
+
+							#if defined(DESKTOP)
 							font_texture_p[((font->texX + (7 - (xx & 7) + (xx & 248))) + (font->texY + yy) * font->texWidth)] = clut[value & 0xf];
 							#endif
 						}
 						else
 						{ //PGF_SHADOWGLYPH
 							value = intraFontGetV(4, font->fontdata, &b);
-							#ifdef PSP
+							#if defined(_PSP)
 							if ((font->texX + xx) & 1)
 							{
 								font->texture[((font->texX + xx) + (font->texY + yy) * font->texWidth) >> 1] &= 0x0F;
@@ -254,7 +262,9 @@ int intraFontGetBMP(intraFont *font, unsigned short id, unsigned char glyphtype)
 								font->texture[((font->texX + xx) + (font->texY + yy) * font->texWidth) >> 1] &= 0xF0;
 								font->texture[((font->texX + xx) + (font->texY + yy) * font->texWidth) >> 1] |= (value);
 							}
-							#else
+							#endif
+
+							#if defined(DESKTOP)
 							font_texture_p[((font->texX + xx) + (font->texY + yy) * font->texWidth)] = clut[value & 0xf];
 							#endif
 						}
@@ -263,7 +273,7 @@ int intraFontGetBMP(intraFont *font, unsigned short id, unsigned char glyphtype)
 			}
 
 			//erase border around glyph
-			#ifdef PSP
+			#if defined(_PSP)
 			for (i = font->texX / 2; i < (font->texX + glyph->width + 1) / 2; i++)
 			{
 				font->texture[i + (font->texY - 1) * font->texWidth / 2] = 0;
@@ -274,7 +284,9 @@ int intraFontGetBMP(intraFont *font, unsigned short id, unsigned char glyphtype)
 				font->texture[((font->texX - 1) + (i * font->texWidth)) >> 1] &= (font->texX & 1) ? 0xF0 : 0x0F;
 				font->texture[((font->texX + glyph->width) + (i * font->texWidth)) >> 1] &= ((font->texX + glyph->width) & 1) ? 0x0F : 0xF0;
 			}
-			#else 
+			#endif
+
+			#if defined(DESKTOP)
 			for (i = font->texX; i < (font->texX + glyph->width + 1); i++)
 			{
 				font_texture_p[i + (font->texY - 1) * font->texWidth]  = 0;
@@ -284,7 +296,7 @@ int intraFontGetBMP(intraFont *font, unsigned short id, unsigned char glyphtype)
 			{
 				font_texture_p[((font->texX - 1) + (i * font->texWidth))] = 0;
 				font_texture_p[((font->texX + glyph->width) + (i * font->texWidth))] = 0;
-			}	
+			}
 			#endif
 			font->texX += glyph->width + 1; //add empty gap to prevent interpolation artifacts from showing
 
@@ -346,7 +358,7 @@ int intraFontGetBMP(intraFont *font, unsigned short id, unsigned char glyphtype)
 	return 1; //texture has changed
 }
 
-int intraFontGetGlyph(unsigned char *data, unsigned long *b, unsigned char glyphtype, signed long *advancemap, Glyph *glyph)
+int intraFontGetGlyph(unsigned char *data, uint32_t *b, unsigned char glyphtype, int32_t *advancemap, Glyph *glyph)
 {
 	if (glyphtype & PGF_CHARGLYPH)
 	{
@@ -357,7 +369,7 @@ int intraFontGetGlyph(unsigned char *data, unsigned long *b, unsigned char glyph
 		(*b) += intraFontGetV(14, data, b) * 8; //skip to shadow
 	}
 
-	unsigned long width, height, left, top, flags;
+	uint32_t width, height, left, top, flags;
 	{
 		width = intraFontGetV(7, data, b);
 		height = intraFontGetV(7, data, b);
@@ -520,11 +532,13 @@ int intraFontPreCache(intraFont *font, unsigned int options)
 	}
 
 	//swizzle texture
-	#ifdef PSP
+	#if defined(_PSP)
 	sceKernelDcacheWritebackAll();
 	intraFontSwizzle(font);
 	sceKernelDcacheWritebackAll();
-	#else
+	#endif
+
+	#if defined(DESKTOP)
 	/*@Note: this is better, unsure if final */
 	font->options |= INTRAFONT_CACHE_ASCII;
 	intraFontActivate(font);
@@ -535,7 +549,7 @@ int intraFontPreCache(intraFont *font, unsigned int options)
 
 intraFont *intraFontLoad(const char *filename, unsigned int options)
 {
-	unsigned long i, j;
+	uint32_t i, j;
 	static Glyph bw_glyph = (Glyph){0, 0, 16, 18, 0, 15, PGF_BMP_H_ROWS, 0, 64, 0};
 	static Glyph bw_shadowGlyph = (Glyph){0, 0, 8, 10, 0, 5, PGF_BMP_H_ROWS, 0, 64, 0};
 	static const unsigned short bw_charmap_compr[] = {0x00a4, 1, 0x00a7, 2, 0x00b0, 2, 0x00b7, 1, 0x00d7, 1, 0x00e0, 2, 0x00e8, 3, 0x00ec, 2,
@@ -565,8 +579,9 @@ intraFont *intraFontLoad(const char *filename, unsigned int options)
 
 	//create font structure
 	intraFont *font = (intraFont *)malloc(sizeof(intraFont));
-	if (!font)
+	if (!font){
 		return NULL;
+	}
 
 	//open pgf file and get file size
 #ifdef _OSLIB_H_
@@ -580,13 +595,15 @@ intraFont *intraFontLoad(const char *filename, unsigned int options)
 	input_free = input;
 	VirtualFileClose(f);
 	FILE *file = fmemopen((void *)input, input_size, "rb");
-#else
+	#else
 	FILE *file = fopen(filename, "rb"); /* read from the file in binary mode */
 #endif
-	if (!file)
+	if (!file){
 		return NULL;
+	}
+
 	fseek(file, 0, SEEK_END);
-	unsigned long filesize = ftell(file);
+	size_t filesize = ftell(file);
 	fseek(file, 0, SEEK_SET);
 
 	//read pgf header
@@ -682,10 +699,10 @@ intraFont *intraFontLoad(const char *filename, unsigned int options)
 	font->isRotated = 0;
 	font->altFont = NULL; //no alternative font
 	font->filename = (char *)malloc((strlen(filename) + 1) * sizeof(char));
-	#if DESKTOP
+	#if defined(DESKTOP)
 	font->texture = (unsigned char *)memalign(16, sizeof(unsigned int)*font->texWidth * font->texHeight);
 	memset(font->texture, 255, sizeof(unsigned int)*font->texWidth * font->texHeight);
-	#else 
+	#else
 	font->texture = (unsigned char *)memalign(16, sizeof(unsigned int)*font->texWidth * font->texHeight >> 1);
 	#endif
 	font->textureID = 0;
@@ -707,7 +724,7 @@ intraFont *intraFontLoad(const char *filename, unsigned int options)
 
 		//read advance table
 		fseek(file, header.header_len + (header.table1_len + header.table2_len + header.table3_len) * 8, SEEK_SET);
-		signed long *advancemap = (signed long *)malloc(header.advance_len * sizeof(signed long) * 2);
+		int32_t *advancemap = (int32_t *)malloc(header.advance_len * sizeof(int32_t) * 2);
 		if (!advancemap)
 		{
 			fclose(file);
@@ -715,7 +732,7 @@ intraFont *intraFontLoad(const char *filename, unsigned int options)
 			intraFontUnload(font);
 			return NULL;
 		}
-		if (fread(advancemap, header.advance_len * sizeof(signed long) * 2, 1, file) != 1)
+		if (fread(advancemap, header.advance_len * sizeof(int32_t) * 2, 1, file) != 1)
 		{
 			free(advancemap);
 			fclose(file);
@@ -724,7 +741,7 @@ intraFont *intraFontLoad(const char *filename, unsigned int options)
 		}
 
 		//read shadowmap
-		unsigned long *ucs_shadowmap = intraFontGetTable(file, header.shadowmap_len, header.shadowmap_bpe);
+		uint32_t *ucs_shadowmap = intraFontGetTable(file, header.shadowmap_len, header.shadowmap_bpe);
 		if (ucs_shadowmap == NULL && (header.shadowmap_len != 0))
 		{
 			/* change logic here to allow zero shadow fonts */
@@ -769,7 +786,7 @@ intraFont *intraFontLoad(const char *filename, unsigned int options)
 		}
 		else
 		{
-			unsigned long *id_charmap = intraFontGetTable(file, header.charmap_len, header.charmap_bpe);
+			uint32_t *id_charmap = intraFontGetTable(file, header.charmap_len, header.charmap_bpe);
 			if (id_charmap == NULL)
 			{
 				free(advancemap);
@@ -788,7 +805,7 @@ intraFont *intraFontLoad(const char *filename, unsigned int options)
 		}
 
 		//read charptr
-		unsigned long *charptr = intraFontGetTable(file, header.charptr_len, header.charptr_bpe);
+		uint32_t *charptr = intraFontGetTable(file, header.charptr_len, header.charptr_bpe);
 		if (charptr == NULL)
 		{
 			free(advancemap);
@@ -800,8 +817,8 @@ intraFont *intraFontLoad(const char *filename, unsigned int options)
 		}
 
 		//read raw fontdata
-		unsigned long start_fontdata = ftell(file);
-		unsigned long len_fontdata = filesize - start_fontdata;
+		uint32_t start_fontdata = ftell(file);
+		uint32_t len_fontdata = filesize - start_fontdata;
 		font->fontdata = (unsigned char *)malloc(len_fontdata * sizeof(unsigned char));
 		if (font->fontdata == NULL)
 		{
@@ -924,7 +941,7 @@ intraFont *intraFontLoad(const char *filename, unsigned int options)
 		free(charptr);
 
 		//cache chars, swizzle texture and free unneeded stuff (if INTRAFONT_CACHE_ALL or _ASCII)
-#ifdef PSP
+#if defined(_PSP)
 		sceKernelDcacheWritebackAll();
 #endif
 		if ((options & INTRAFONT_CACHE_ASCII) && ((y + ysize + 1) <= font->texHeight))
@@ -975,7 +992,7 @@ intraFont *intraFontLoad(const char *filename, unsigned int options)
 		//cache chars, swizzle texture and free unneeded stuff (if INTRAFONT_CACHE_ALL or _ASCII): not available ->skip
 	}
 
-#ifdef PSP
+#if defined(_PSP)
 		sceKernelDcacheWritebackAll();
 #endif
 
@@ -1027,7 +1044,7 @@ void intraFontShutdown(void)
 	//Nothing yet
 }
 
-#ifdef PSP
+#if defined(_PSP)
 static inline void intraFontActivate_PSP(intraFont *font){
 	sceGuClutMode(GU_PSM_8888, 0, 255, 0);
 	sceGuClutLoad(2, clut);
@@ -1067,10 +1084,9 @@ static inline void intraFontActivate_PC(intraFont *font){
 #else
 		glTexImage2D(GL_TEXTURE_2D,	0, GL_RGBA8, font->texWidth, font->texWidth,0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, font->texture);
 #endif
-		printf("Texture uploaded!\n");
 		font->options &= ~INTRAFONT_DIRTY;
 	}
-}	
+}
 #endif
 
 void intraFontActivate(intraFont *font)
@@ -1235,7 +1251,7 @@ float intraFontPrintColumnUCS2(intraFont *font, float x, float y, float column, 
 	return intraFontPrintColumnUCS2Ex(font, x, y, 0.0f, text, cccStrlenUCS2(text));
 }
 
-#ifdef PSP
+#if defined(_PSP)
 float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column, const cccUCS2 *text, int length)
 {
 	if (!text || length <= 0 || !font)

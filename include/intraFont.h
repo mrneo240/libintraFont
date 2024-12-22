@@ -18,6 +18,7 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
 #include "libccc.h"
 
 /** @defgroup intraFont Font Library
@@ -86,22 +87,22 @@ extern "C" {
  * @note This is used internally by ::intraFont and has no other relevance.
  */
 typedef struct {
-  unsigned short x;         //in pixels
-  unsigned short y;         //in pixels
-  unsigned char width;      //in pixels
-  unsigned char height;     //in pixels
-  char left;                //in pixels
-  char top;                 //in pixels
-  unsigned char flags;
-  unsigned short shadowID;  //to look up in shadowmap
-  char advance;             //in quarterpixels
-  unsigned long ptr;        //offset 
+  uint16_t x;         //in pixels
+  uint16_t y;         //in pixels
+  uint8_t width;      //in pixels
+  uint8_t height;     //in pixels
+  int8_t left;                //in pixels
+  int8_t top;                 //in pixels
+  uint8_t flags;
+  uint16_t shadowID;  //to look up in shadowmap
+  int8_t advance;             //in quarterpixels
+  uint32_t ptr;        //offset 
 } Glyph;
 
 typedef struct {
-  unsigned short x;         //in pixels
-  unsigned short y;         //in pixels
-  unsigned char flags;
+  uint16_t x;         //in pixels
+  uint16_t y;         //in pixels
+  uint8_t flags;
 } GlyphBW;
 
 /**
@@ -110,33 +111,33 @@ typedef struct {
  * @note This is used internally by ::intraFont and has no other relevance.
  */
 typedef struct {
-  unsigned short header_start;
-  unsigned short header_len;
-  char pgf_id[4];
-  unsigned long revision;
-  unsigned long version;
-  unsigned long charmap_len;
-  unsigned long charptr_len;
-  unsigned long charmap_bpe;
-  unsigned long charptr_bpe;
-  unsigned char junk00[21];
-  unsigned char family[64];
-  unsigned char style[64];
-  unsigned char junk01[1];
-  unsigned short charmap_min;
-  unsigned short charmap_max;
-  unsigned char junk02[50];
-  unsigned long fixedsize[2];
-  unsigned char junk03[14];
-  unsigned char table1_len;
-  unsigned char table2_len;
-  unsigned char table3_len;
-  unsigned char advance_len;
-  unsigned char junk04[102];
-  unsigned long shadowmap_len;
-  unsigned long shadowmap_bpe;
-  unsigned char junk05[4];
-  unsigned long shadowscale[2];
+  uint16_t header_start;
+  uint16_t header_len;
+  int8_t pgf_id[4];
+  uint32_t revision;
+  uint32_t version;
+  uint32_t charmap_len;
+  uint32_t charptr_len;
+  uint32_t charmap_bpe;
+  uint32_t charptr_bpe;
+  uint8_t junk00[21];
+  uint8_t family[64];
+  uint8_t style[64];
+  uint8_t junk01[1];
+  uint16_t charmap_min;
+  uint16_t charmap_max;
+  uint8_t junk02[50];
+  uint32_t fixedsize[2];
+  uint8_t junk03[14];
+  uint8_t table1_len;
+  uint8_t table2_len;
+  uint8_t table3_len;
+  uint8_t advance_len;
+  uint8_t junk04[102];
+  uint32_t shadowmap_len;
+  uint32_t shadowmap_bpe;
+  uint8_t junk05[4];
+  uint32_t shadowscale[2];
   //currently no need ;
 } PGF_Header;
 
@@ -148,41 +149,41 @@ typedef struct fontVertex fontVertex;
  */
 typedef struct intraFont {
   char* filename;
-  unsigned char* fontdata;
+  uint8_t* fontdata;
   
-  unsigned char* texture;          /**< The bitmap data */
-  unsigned int textureID;          /**< OpenGL texture id */
-  unsigned int texWidth;           /**< Texture size (power2) */
-  unsigned int texHeight;          /**< Texture height (power2) */  
+  uint8_t* texture;          /**< The bitmap data */
+  uint32_t textureID;          /**< OpenGL texture id */
+  uint32_t texWidth;           /**< Texture size (power2) */
+  uint32_t texHeight;          /**< Texture height (power2) */  
 
-  unsigned short* charmap_compr;   /**< Compression info on compressed charmap */  
-  unsigned short* charmap;         /**< Character map */  
+  uint16_t* charmap_compr;   /**< Compression info on compressed charmap */  
+  uint16_t* charmap;         /**< Character map */  
   Glyph* glyph;                    /**< Character glyphs */
   GlyphBW* glyphBW;
   Glyph* shadowGlyph;              /**<  Shadow glyph(s) */
   struct intraFont* altFont;
   fontVertex *v;
-  unsigned int v_size;
+  uint32_t v_size;
   
   float size;
-  unsigned int color;
-  unsigned int shadowColor;
+  uint32_t color;
+  uint32_t shadowColor;
   float angle, Rsin, Rcos;                /**< For rotation */
-  unsigned int options;
+  uint32_t options;
 
-  short isRotated;
-  unsigned short texX;
-  unsigned short texY;
-  unsigned short texYSize;
-  unsigned short n_chars;
-  unsigned short n_shadows;
+  int16_t isRotated;
+  uint16_t texX;
+  uint16_t texY;
+  uint16_t texYSize;
+  uint16_t n_chars;
+  uint16_t n_shadows;
 
-  unsigned char fileType;          /**< FILETYPE_PGF or FILETYPE_BWFON */
+  uint8_t fileType;          /**< FILETYPE_PGF or FILETYPE_BWFON */
   
-  char advancex;                   /**< in quarterpixels */
-  char advancey;                   /**< in quarterpixels */
-  unsigned char charmap_compr_len; /**< length of compression info */
-  unsigned char shadowscale;       /**< shadows in pgf file (width, height, left and top properties as well) are scaled by factor of (shadowscale>>6) */  
+  int8_t advancex;                   /**< in quarterpixels */
+  int8_t advancey;                   /**< in quarterpixels */
+  uint8_t charmap_compr_len; /**< length of compression info */
+  uint8_t shadowscale;       /**< shadows in pgf file (width, height, left and top properties as well) are scaled by factor of (shadowscale>>6) */  
 } intraFont;
 
 
