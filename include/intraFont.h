@@ -148,6 +148,12 @@ typedef struct
   float x, y, z;
 } fontVertex;
 
+typedef struct
+{
+  float width;
+  float height;
+} textDimen;
+
 /**
  * A Font struct
  * Order is ruined but packs better - mrneo240
@@ -285,6 +291,7 @@ float intraFontPrintUCS2        (intraFont *font, float x, float y, const unsign
 float intraFontPrintUCS2Ex      (intraFont *font, float x, float y, const unsigned short *text, int length);
 float intraFontPrintColumnUCS2  (intraFont *font, float x, float y, float width, const unsigned short *text);
 float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float width, const unsigned short *text, int length);
+float intraFontPrintColumnUCS2ExHeight(intraFont *font, float x, float y, float width, const unsigned short *text, int length, float *outHeight);
 
 /**
  * Draw text along the baseline starting at x, y.
@@ -307,6 +314,7 @@ float intraFontPrint        (intraFont *font, float x, float y, const char *text
 float intraFontPrintEx      (intraFont *font, float x, float y, const char *text, int length);
 float intraFontPrintColumn  (intraFont *font, float x, float y, float width, const char *text);
 float intraFontPrintColumnEx(intraFont *font, float x, float y, float width, const char *text, int length);
+float intraFontPrintColumnExHeight(intraFont *font, float x, float y, float width, const char *text, int length, float *outHeight);
 
 /**
  * Draw text along the baseline starting at x, y (with formatting).
@@ -342,8 +350,8 @@ float intraFontPrintf        (intraFont *font, float x, float y, const char *tex
  *
  * @returns The total width of the text (until the first newline char)
  */
-float intraFontMeasureText  (intraFont *font, const char *text);
-float intraFontMeasureTextEx(intraFont *font, const char *text, int length);
+textDimen intraFontMeasureText  (intraFont *font, const char *text);
+textDimen intraFontMeasureTextEx(intraFont *font, const char *text, int length);
 
 /**
  * Measure a length of UCS-2 encoded text if it were to be drawn
@@ -356,8 +364,8 @@ float intraFontMeasureTextEx(intraFont *font, const char *text, int length);
  *
  * @returns The total width of the text (until the first newline char)
  */
-float intraFontMeasureTextUCS2  (intraFont *font, const unsigned short *text);
-float intraFontMeasureTextUCS2Ex(intraFont *font, const unsigned short *text, int length);
+textDimen intraFontMeasureTextUCS2  (intraFont *font, const unsigned short *text);
+textDimen intraFontMeasureTextUCS2Ex(intraFont *font, const unsigned short *text, int length);
 
 /** @} */
 

@@ -1219,6 +1219,12 @@ float intraFontPrintColumn(intraFont *font, float x, float y, float column, cons
 
 float intraFontPrintColumnEx(intraFont *font, float x, float y, float column, const char *text, int length)
 {
+	float nullHeight = 0;
+	return intraFontPrintColumnExHeight(font, x, y, column, text, length, &nullHeight);
+}
+
+float intraFontPrintColumnExHeight(intraFont *font, float x, float y, float column, const char *text, int length, float *outHeight)
+{
 	if (!text || length <= 0 || !font)
 		return x;
 
@@ -1248,11 +1254,11 @@ float intraFontPrintColumnEx(intraFont *font, float x, float y, float column, co
 
 	if (column >= 0)
 	{
-		x = intraFontPrintColumnUCS2Ex(font, x, y, column, ucs2_text, length);
+		x = intraFontPrintColumnUCS2ExHeight(font, x, y, column, ucs2_text, length, outHeight);
 	}
 	else
 	{															 //negative column prevents from drawing -> measure text
-		x = intraFontMeasureTextUCS2Ex(font, ucs2_text, length); //(hack to share local buffer between intraFontPrint and intraFontMeasure)
+		x = intraFontMeasureTextUCS2Ex(font, ucs2_text, length).width; //(hack to share local buffer between intraFontPrint and intraFontMeasure)
 	}
 
 	// Free temporary buffer if allocated
@@ -1279,10 +1285,17 @@ float intraFontPrintColumnUCS2(intraFont *font, float x, float y, float column, 
 	return intraFontPrintColumnUCS2Ex(font, x, y, 0.0f, text, cccStrlenUCS2(text));
 }
 
+
+float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column, const cccUCS2 *text, int length)
+{
+	float nullHeight = 0;
+	intraFontPrintColumnUCS2ExHeight(font, x, y, column, text, length, &nullHeight);
+}
+
 #if defined(_PSP)
 
 #define VERTEX_PER_QUAD (6)
-float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column, const cccUCS2 *text, int length)
+float intraFontPrintColumnUCS2ExHeight(intraFont *font, float x, float y, float column, const cccUCS2 *text, int length, float *outHeight)
 {
 	if (!text || length <= 0 || !font)
 		return x;
@@ -1300,7 +1313,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 					return x;
 				for (i = 0; i < length; i++)
 					ucs2_text[i] = (text[i] == '\n') ? ' ' : text[i];
-				x = intraFontPrintColumnUCS2Ex(font, x, y, column, ucs2_text, length);
+				x = intraFontPrintColumnUCS2Ex(font, x, y, column, ucs2_text, length, outHeight);
 				free(ucs2_text);
 				return x;
 			}
@@ -1430,7 +1443,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 					ux.f = x;
 					uleft.f = left;
 					count = ux.i - uleft.i;
-					textwidth = intraFontMeasureTextUCS2Ex(font, text + i, length - i) + 1;
+					textwidth = intraFontMeasureTextUCS2Ex(font, text + i, length - i).width + 1;
 					if (textwidth > column)
 					{ //scrolling really required
 
@@ -1542,12 +1555,12 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 							n_spaces++;
 							eol = j;
 						}
-						if (intraFontMeasureTextUCS2Ex(font, text + i, j + 1 - i) > column)
+						if (intraFontMeasureTextUCS2Ex(font, text + i, j + 1 - i).width > column)
 						{ //line too long -> line-break
 							if (eol < 0)
 								eol = j; //break in the middle of the word
 							if (n_spaces > 0)
-								fill = (column - intraFontMeasureTextUCS2Ex(font, text + i, eol - i)) / ((float)n_spaces);
+								fill = (column - intraFontMeasureTextUCS2Ex(font, text + i, eol - i).width) / ((float)n_spaces);
 							break;
 						}
 					}
@@ -1560,9 +1573,9 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 
 					left = x;
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_RIGHT)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i, eol - i);
+						left -= intraFontMeasureTextUCS2Ex(font, text + i, eol - i).width;
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_CENTER)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i, eol - i) / 2.0;
+						left -= intraFontMeasureTextUCS2Ex(font, text + i, eol - i).width / 2.0;
 				}
 			}
 			else
@@ -1571,16 +1584,16 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 				if (text[i] == '\n')
 				{
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_RIGHT)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i + 1, length - i - 1);
+						left -= intraFontMeasureTextUCS2Ex(font, text + i + 1, length - i - 1).width;
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_CENTER)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i + 1, length - i - 1) / 2.0;
+						left -= intraFontMeasureTextUCS2Ex(font, text + i + 1, length - i - 1).width / 2.0;
 				}
 				else
 				{
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_RIGHT)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i, length - i);
+						left -= intraFontMeasureTextUCS2Ex(font, text + i, length - i).width;
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_CENTER)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i, length - i) / 2.0;
+						left -= intraFontMeasureTextUCS2Ex(font, text + i, length - i).width / 2.0;
 				}
 			}
 
@@ -1819,7 +1832,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 				unsigned int altOptions = (font->altFont)->options;
 				(font->altFont)->options = altOptions & (PGF_WIDTH_MASK + PGF_CACHE_MASK);
 				const float adjust = left + width;
-				width += intraFontPrintColumnUCS2Ex(font->altFont, adjust, top + height, 0.0f, text + i, 1) - (adjust);
+				width += intraFontPrintColumnUCS2Ex(font->altFont, adjust, top + height, 0.0f, text + i, 1, outHeight) - (adjust);
 				(font->altFont)->options = altOptions;
 			}
 		}
@@ -1855,7 +1868,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 
 #define VERTEX_PER_QUAD (6)
 
-float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column, const cccUCS2 *text, int length)
+float intraFontPrintColumnUCS2ExHeight(intraFont *font, float x, float y, float column, const cccUCS2 *text, int length, float *outHeight)
 {
 	if (!text || length <= 0 || !font)
 		return x;
@@ -1873,7 +1886,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 					return x;
 				for (i = 0; i < length; i++)
 					ucs2_text[i] = (text[i] == '\n') ? ' ' : text[i];
-				x = intraFontPrintColumnUCS2Ex(font, x, y, column, ucs2_text, length);
+				x = intraFontPrintColumnUCS2ExHeight(font, x, y, column, ucs2_text, length, outHeight);
 				free(ucs2_text);
 				return x;
 			}
@@ -1989,7 +2002,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 		}
 		font->v = (fontVertex*)malloc(VERTEX_PER_QUAD * (n_glyphs + n_sglyphs) * sizeof(fontVertex));
 		font->v_size = VERTEX_PER_QUAD * (n_glyphs + n_sglyphs) * sizeof(fontVertex);
-		printf("%s font->v size =\t %d\n", font->filename, font->v_size);
+		//printf("%s font->v size =\t %d\n", font->filename, font->v_size);
 	}
 	v_buffer = font->v;
 	memset(v_buffer, 0, VERTEX_PER_QUAD * (n_glyphs + n_sglyphs) * sizeof(fontVertex));
@@ -2018,7 +2031,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 					ux.f = x;
 					uleft.f = left;
 					count = ux.i - uleft.i;
-					textwidth = intraFontMeasureTextUCS2Ex(font, text + i, length - i) + 1;
+					textwidth = intraFontMeasureTextUCS2Ex(font, text + i, length - i).width + 1;
 					if (textwidth > column)
 					{ //scrolling really required
 
@@ -2135,12 +2148,12 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 							n_spaces++;
 							eol = j;
 						}
-						if (intraFontMeasureTextUCS2Ex(font, text + i, j + 1 - i) > column)
+						if (intraFontMeasureTextUCS2Ex(font, text + i, j + 1 - i).width > column)
 						{ //line too long -> line-break
 							if (eol < 0)
 								eol = j; //break in the middle of the word
 							if (n_spaces > 0)
-								fill = (column - intraFontMeasureTextUCS2Ex(font, text + i, eol - i)) / ((float)n_spaces);
+								fill = (column - intraFontMeasureTextUCS2Ex(font, text + i, eol - i).width) / ((float)n_spaces);
 							break;
 						}
 					}
@@ -2153,9 +2166,9 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 
 					left = x;
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_RIGHT)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i, eol - i);
+						left -= intraFontMeasureTextUCS2Ex(font, text + i, eol - i).width;
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_CENTER)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i, eol - i) / 2.0;
+						left -= intraFontMeasureTextUCS2Ex(font, text + i, eol - i).width / 2.0;
 				}
 			}
 			else
@@ -2164,16 +2177,16 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 				if (text[i] == '\n')
 				{
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_RIGHT)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i + 1, length - i - 1);
+						left -= intraFontMeasureTextUCS2Ex(font, text + i + 1, length - i - 1).width;
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_CENTER)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i + 1, length - i - 1) / 2.0;
+						left -= intraFontMeasureTextUCS2Ex(font, text + i + 1, length - i - 1).width / 2.0;
 				}
 				else
 				{
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_RIGHT)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i, length - i);
+						left -= intraFontMeasureTextUCS2Ex(font, text + i, length - i).width;
 					if ((font->options & PGF_ALIGN_MASK) == INTRAFONT_ALIGN_CENTER)
-						left -= intraFontMeasureTextUCS2Ex(font, text + i, length - i) / 2.0;
+						left -= intraFontMeasureTextUCS2Ex(font, text + i, length - i).width / 2.0;
 				}
 			}
 
@@ -2268,7 +2281,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 					v3->c = color;
 					v3->x = xl, v3->y = yd, v3->z = 0;
 
-					printf("%c  => top %d left %d height %f width %f\n", text[i] & 255,glyph->top, glyph->left, yd-yu, xr-xl  );
+					//printf("%c  => top %d left %d height %f width %f\n", text[i] & 255,glyph->top, glyph->left, yd-yu, xr-xl  );
 
 					if (font->isRotated)
 					{
@@ -2394,7 +2407,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 				unsigned int altOptions = (font->altFont)->options;
 				(font->altFont)->options = altOptions & (PGF_WIDTH_MASK + PGF_CACHE_MASK);
 				const float adjust = left + width;
-				width += intraFontPrintColumnUCS2Ex(font->altFont, adjust, top + height, 0.0f, text + i, 1)- (adjust);
+				width += intraFontPrintColumnUCS2ExHeight(font->altFont, adjust, top + height, 0.0f, text + i, 1, outHeight)- (adjust);
 				(font->altFont)->options = altOptions;
 
 			}
@@ -2451,32 +2464,61 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 }
 #endif
 
-float intraFontMeasureText(intraFont *font, const char *text)
+textDimen intraFontMeasureText(intraFont *font, const char *text)
 {
 	if (!font)
-		return 0;
+		return (textDimen){0};
 	int length = cccStrlenCode((cccCode *)text, font->options / 0x00010000);
 	return intraFontMeasureTextEx(font, text, length);
 }
 
-float intraFontMeasureTextEx(intraFont *font, const char *text, int length)
+textDimen intraFontMeasureTextEx(intraFont *font, const char *text, int length)
 {
-	return intraFontPrintColumnEx(font, 0.f, 0.f, -1.0f, text, length); //explanation: intraFontPrintColumnEx does the String -> UCS2 conversation,
-																		//but a negative column width triggers measurement without drawing
+	if (!text || length <= 0 || !font)
+		return (textDimen){0};
+
+	#define LOCAL_BUFFER_LENGTH 256
+	cccUCS2 buffer[LOCAL_BUFFER_LENGTH];
+	cccUCS2 *ucs2_text = buffer;
+
+	// Allocate a temporary buffer if too long
+	if (length > LOCAL_BUFFER_LENGTH)
+		ucs2_text = (cccUCS2 *)malloc(length * sizeof(cccUCS2));
+	if (!ucs2_text)
+		return (textDimen){0};
+
+	//->UCS2 conversion
+	length = cccCodetoUCS2(ucs2_text, length, (cccCode *)text, font->options / 0x00010000);
+
+	//for scrolling: if text contains '\n', replace with spaces
+	int i;
+	if (font->options & INTRAFONT_SCROLL_LEFT)
+	{
+		for (i = 0; i < length; i++)
+		{
+			if (ucs2_text[i] == '\n')
+				ucs2_text[i] = ' ';
+		}
+	}
+
+	return intraFontMeasureTextUCS2Ex(font, ucs2_text, length);
 }
 
-float intraFontMeasureTextUCS2(intraFont *font, const cccUCS2 *text)
+textDimen intraFontMeasureTextUCS2(intraFont *font, const cccUCS2 *text)
 {
 	return intraFontMeasureTextUCS2Ex(font, text, cccStrlenUCS2(text));
 }
 
-float intraFontMeasureTextUCS2Ex(intraFont *font, const cccUCS2 *text, int length)
+textDimen intraFontMeasureTextUCS2Ex(intraFont *font, const cccUCS2 *text, int length)
 {
+	textDimen dimensions = (textDimen){.width=0, .height=0};
+
 	if (!text || length <= 0 || !font)
-		return 0.0f;
+		return dimensions;
 
 	int i;
-	float x = 0.0f;
+	float x = 0.f;
+	float height = 0.f;
 
 	for (i = 0; (i < length) && (text[i] != '\n'); i++)
 	{ //measure until end of string or first newline char
@@ -2485,12 +2527,15 @@ float intraFontMeasureTextUCS2Ex(intraFont *font, const cccUCS2 *text, int lengt
 		{
 			unsigned short glyph_ptr = (font->fileType == FILETYPE_PGF) ? char_id : 0; //for fields not covered in GlyphBW (advance,...)
 			x += (font->options & INTRAFONT_WIDTH_FIX) ? (font->options & PGF_WIDTH_MASK) * font->size : (font->glyph[glyph_ptr].advance) * font->size * 0.25f;
+			height = font->glyph[glyph_ptr].height > height ? font->glyph[glyph_ptr].height : height;
 		}
 		else
 		{
-			x += intraFontMeasureTextUCS2Ex(font->altFont, text + i, 1); //try alternative font if char does not exist in current font
+			x += intraFontMeasureTextUCS2Ex(font->altFont, text + i, 1).width; //try alternative font if char does not exist in current font
 		}
 	}
 
-	return x;
+	dimensions.width = x;
+	dimensions.height = height * font->size;
+	return dimensions;
 }
