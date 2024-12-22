@@ -1103,6 +1103,34 @@ void intraFontActivate(intraFont *font)
 #endif
 }
 
+#ifdef PSP
+static inline void  intraFontDeactivate_PSP(void){
+	sceGuDisable(GU_TEXTURE_2D);
+}
+#endif
+
+#ifdef DESKTOP
+/*@Note: Maybe check to see if we need to upload every frame or just once? */
+static inline void intraFontDeactivate_PC(void){
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
+}
+#endif
+
+void intraFontDeactivate()
+{
+
+#if defined(_PSP)
+	intraFontDeactivate_PSP();
+#else
+	intraFontDeactivate_PC();
+#endif
+}
+
 void intraFontSetStyle(intraFont *font, float size, unsigned int color, unsigned int shadowColor, float angle, unsigned int options)
 {
 	if (!font)
@@ -1808,6 +1836,8 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 		sceGuDrawArray((font->isRotated ? GU_TRIANGLES : GU_SPRITES), GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_2D, n_glyphs * (font->isRotated ? 6 : 2), 0, v + (n_sglyphs * (font->isRotated ? 6 : 2)));
 	sceGuEnable(GU_DEPTH_TEST);
 
+	intraFontDeactivate();
+
 	if (scroll == 1)
 	{
 		sceGuScissor(0, 0, 480, 272); //reset window to whole screen (test was previously enabled)
@@ -1823,14 +1853,8 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 
 #ifdef DESKTOP
 
-struct fontVertex
-{
-	float u, v;
-	unsigned int c;
-	float x, y, z;
-};
-
 #define VERTEX_PER_QUAD (6)
+
 float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column, const cccUCS2 *text, int length)
 {
 	if (!text || length <= 0 || !font)
@@ -2200,6 +2224,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 						glyph->y = font->glyphBW[char_id].y;
 					}
 
+
 					// Screen coords
 					xl = left + width + glyph->left * glyphscale;
 					xr = xl + glyph->width * glyphscale;
@@ -2242,6 +2267,8 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 					v3->u = ul, v3->v = vd;
 					v3->c = color;
 					v3->x = xl, v3->y = yd, v3->z = 0;
+
+					printf("%c  => top %d left %d height %f width %f\n", text[i] & 255,glyph->top, glyph->left, yd-yu, xr-xl  );
 
 					if (font->isRotated)
 					{
@@ -2409,6 +2436,8 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 		glDrawArrays(GL_TRIANGLES, (n_sglyphs) * VERTEX_PER_QUAD, (n_glyphs) * VERTEX_PER_QUAD);
 
 	glDisable(GL_SCISSOR_TEST);
+
+	intraFontDeactivate();
 
 	if (scroll == 1)
 	{
