@@ -1961,7 +1961,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 		font->v = (struct fontVertex*)malloc(VERTEX_PER_QUAD * (n_glyphs + n_sglyphs) * sizeof(fontVertex));
 		font->v_size = VERTEX_PER_QUAD * (n_glyphs + n_sglyphs) * sizeof(fontVertex);
 		printf("%s font->v size =\t %d\n", font->filename, font->v_size);
-	} 
+	}
 	v_buffer = font->v;
 	memset(v_buffer, 0, VERTEX_PER_QUAD * (n_glyphs + n_sglyphs) * sizeof(fontVertex));
 
@@ -2259,7 +2259,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 						vy = y + (v3->x - x) * font->Rsin + (v3->y - y) * font->Rcos;
 						v3->x = vx, v3->y = vy;
 					}
-					
+
 					*v4 = *v0;
 					*v5 = *v2;
 
@@ -2270,7 +2270,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 			//add vertices for shadow
 			if (c_index > last_c_index && (shadowGlyph_ptr))
 			{
-				
+
 				Glyph *shadowGlyph = &(font->shadowGlyph[shadowGlyph_ptr]);
 
 				// Screen coords
@@ -2337,11 +2337,11 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 
 				*s4 = *s0;
 				*s5 = *s2;
-				
+
 				s_index++;
 				last_c_index = c_index;
 			}
-			
+
 			// advance
 			if (font->options & INTRAFONT_WIDTH_FIX)
 			{
@@ -2364,7 +2364,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 				const float adjust = left + width;
 				width += intraFontPrintColumnUCS2Ex(font->altFont, adjust, top + height, 0.0f, text + i, 1)- (adjust);
 				(font->altFont)->options = altOptions;
-				
+
 			}
 		}
 	}
@@ -2372,7 +2372,7 @@ float intraFontPrintColumnUCS2Ex(intraFont *font, float x, float y, float column
 	//finalize and activate texture (if not already active or has been changed)
 	if (!(font->options & INTRAFONT_ACTIVE))
 		intraFontActivate(font);
-	
+
 	#if 0
 	printf("+Glyph----------------\n");
 	for(int i=0;i<(n_glyphs + n_sglyphs) * VERTEX_PER_QUAD;i++){
