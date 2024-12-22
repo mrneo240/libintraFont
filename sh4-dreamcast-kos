@@ -1,0 +1,32 @@
+[constants]
+toolchain = '/opt/toolchains/dc'
+
+[binaries]
+c = toolchain + '/sh-elf/bin/sh-elf-gcc'
+cpp = toolchain + '/sh-elf/bin/sh-elf-g++'
+ar = toolchain + '/sh-elf/bin/sh-elf-gcc-ar'
+strip = toolchain + '/sh-elf/bin/sh-elf-strip'
+
+[built-in options]
+c_args = ['-I' + toolchain +'/kos/include', '-I' + toolchain +'/kos/kernel/arch/dreamcast/include', '-I' + toolchain +'/kos/addons/include',
+          '-fomit-frame-pointer', '-ml', '-m4-single-only', '-ffunction-sections', '-fdata-sections','-fno-builtin',
+          '-D_arch_dreamcast', '-D_arch_sub_pristine', '-Wformat=0']
+c_link_args = ['-ml', '-m4-single-only', '-Wl,-Ttext=0x8c010000', '-Wl,--gc-sections', '-T' + toolchain +'/kos/utils/ldscripts/shlelf.xc', '-nodefaultlibs', '-L' + toolchain +'/kos/lib/dreamcast', '-L' + toolchain +'/kos/addons/lib/dreamcast', '-L' + toolchain +'/kos/../kos-ports/lib', '-Wl,--start-group', '-lkallisti', '-lc', '-lgcc', '-Wl,--end-group' ]
+cpp_args = []
+cpp_link_args = []
+prefix = toolchain
+libdir = 'lib'
+bindir = 'bin'
+
+[properties]
+#pkg_config_libdir = '/usr/lib/pkgconfig'
+#pkg_config_path = '/usr/lib/pkgconfig'
+
+[host_machine]
+system = 'dreamcast'
+cpu_family = 'sh4'
+cpu = 'sh4'
+endian = 'little'
+
+[project options]
+platform = 'dc'

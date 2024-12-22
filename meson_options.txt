@@ -1,0 +1,1 @@
+option('platform', type : 'combo', choices : ['glfw', 'psp', 'dc'], value : 'glfw', yield:true)

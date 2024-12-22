@@ -13,10 +13,14 @@
  *
  */
 
+#if defined(__WIN32) || defined(__WIN64) || defined(DESKTOP)
 #if defined(__WIN32) || defined(__WIN64)
 #include <windows.h>
-#include <GLFW/galo.h>
+#endif
+#define GLAD_GL_IMPLEMENTATION
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+#include <glad/glad.h>
 #define memalign(a, b) malloc(b)
 #define INFO(msg) \
     fprintf(stderr, "info: %s:%d: ", __FILE__, __LINE__); \
@@ -29,7 +33,7 @@
 #include <pspdisplay.h>
 #endif
 #if defined(_arch_dreamcast)
-#include <gl.h>
+#include <GL/gl.h>
 #define DESKTOP 1
 #endif
 
