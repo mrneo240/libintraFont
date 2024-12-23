@@ -76,7 +76,7 @@ void draw(void) {
   // * Draw the sinusoid *
 
   // Get the x position of the 1st char
-  x = 12;  // 240 - intraFontMeasureText(font, sinus.str) / 2;
+  x = 12;  // 240 - intraFontMeasureText(font, sinus.str).width / 2;
   x2 = 120;
 
   // Increment the speed

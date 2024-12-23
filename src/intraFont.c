@@ -1313,7 +1313,7 @@ float intraFontPrintColumnUCS2ExHeight(intraFont *font, float x, float y, float 
 					return x;
 				for (i = 0; i < length; i++)
 					ucs2_text[i] = (text[i] == '\n') ? ' ' : text[i];
-				x = intraFontPrintColumnUCS2Ex(font, x, y, column, ucs2_text, length, outHeight);
+				x = intraFontPrintColumnUCS2Ex(font, x, y, column, ucs2_text, length);
 				free(ucs2_text);
 				return x;
 			}
@@ -1832,7 +1832,7 @@ float intraFontPrintColumnUCS2ExHeight(intraFont *font, float x, float y, float 
 				unsigned int altOptions = (font->altFont)->options;
 				(font->altFont)->options = altOptions & (PGF_WIDTH_MASK + PGF_CACHE_MASK);
 				const float adjust = left + width;
-				width += intraFontPrintColumnUCS2Ex(font->altFont, adjust, top + height, 0.0f, text + i, 1, outHeight) - (adjust);
+				width += intraFontPrintColumnUCS2Ex(font->altFont, adjust, top + height, 0.0f, text + i, 1) - (adjust);
 				(font->altFont)->options = altOptions;
 			}
 		}
