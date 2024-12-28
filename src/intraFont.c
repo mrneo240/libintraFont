@@ -1025,6 +1025,9 @@ void intraFontUnload(intraFont *font)
 		if (font->glyphBW)
 			free(font->glyphBW);
 	}
+  	if (font->v) 
+		free(font->v);
+  	
 	if (font)
 		free(font);
 	font = NULL;
