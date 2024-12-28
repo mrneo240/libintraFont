@@ -75,48 +75,51 @@ dep = [ m_dep, platform_dep ]
 arg_c = [ arg_base, arg_code ]
 
 libintrafont = static_library('libintrafont',
-           c_args: arg_c,
-           link_args: arg_linker,
-           sources: src,
-           include_directories : inc,
-           dependencies: dep)
+                               c_args: arg_c,
+                               link_args: arg_linker,
+                               sources: src,
+                               include_directories : inc,
+                               dependencies: dep)
 
 libintrafont_dep = declare_dependency(link_with : libintrafont,  include_directories : inc, dependencies: dep)
 
-fonttest = executable('fonttest',
-           c_args: arg_c,
-           link_args: arg_linker,
-           sources: ['samples/fonttest/fonttest.c'],
-           dependencies: [libintrafont_dep],
-           install: true)
+if not meson.is_subproject()
+  fonttest = executable('fonttest',
+                       c_args: arg_c,
+                       link_args: arg_linker,
+                       sources: ['samples/fonttest/fonttest.c'],
+                       dependencies: [libintrafont_dep],
+                       install: true)
 
-sinusoid = executable('sinusoid',
-           c_args: arg_c,
-           link_args: arg_linker,
-           sources: ['samples/sinusoid/sinus.c'],
-           dependencies: [libintrafont_dep],
-           install: true)
+  sinusoid = executable('sinusoid',
+                       c_args: arg_c,
+                       link_args: arg_linker,
+                       sources: ['samples/sinusoid/sinus.c'],
+                       dependencies: [libintrafont_dep],
+                       install: true)
 
-if opt_platform == 'dc'
-dc_binary = '1ST_READ.BIN'
+  # Dreamcast
+  if opt_platform == 'dc'
+    dc_binary = '1ST_READ.BIN'
 
-script_path = join_paths(meson.current_source_dir(), 'pkg_dreamcast.sh')
-custom_target(dc_binary,
-  depends: sinusoid,
-  input : sinusoid,
-  output : 'fake',
-  command : [script_path, '@INPUT@', '@OUTPUT@'],
-  build_by_default : true)
+    script_path = join_paths(meson.current_source_dir(), 'pkg_dreamcast.sh')
+    custom_target(dc_binary,
+                  depends: sinusoid,
+                  input : sinusoid,
+                  output : 'fake',
+                  command : [script_path, '@INPUT@', '@OUTPUT@'],
+                  build_by_default : true)
 
-# Psp
-elif opt_platform == 'psp'
-psp_binary = 'EBOOT.PBP'
+  # Psp
+  elif opt_platform == 'psp'
+    psp_binary = 'EBOOT.PBP'
 
-script_path = join_paths(meson.current_source_dir(), 'pkg_psp.sh')
-custom_target(psp_binary,
-  depends: fonttest,
-  input : fonttest,
-  output : 'fake',
-  command : [script_path, '@INPUT@', '@OUTPUT@'],
-  build_by_default : true)
+    script_path = join_paths(meson.current_source_dir(), 'pkg_psp.sh')
+    custom_target(psp_binary,
+                  depends: sinusoid,
+                  input : sinusoid,
+                  output : 'fake',
+                  command : [script_path, '@INPUT@', '@OUTPUT@'],
+                  build_by_default : true)
+    endif
 endif

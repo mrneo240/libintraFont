@@ -1,2 +1,3 @@
 font/
-build_*/
+build*/
+meson.build.user
